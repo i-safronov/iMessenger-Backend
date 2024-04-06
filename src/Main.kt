@@ -21,5 +21,12 @@ fun main() {
  *
  * Registration:
  * /registration?email=some@gmail.com&password=*****
+ * Response: success:some@gmail.com
+ * Error: exception:msg
+ *
+ * Login:
+ * /login?email=some@gmail.com&password=*****
+ * Response: success:some@gmail.com
+ * Error: exception:msg
  *
  * */

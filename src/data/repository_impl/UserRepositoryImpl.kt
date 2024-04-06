@@ -47,7 +47,7 @@ class UserRepositoryImpl(
                 val password = matcher.group(1)
 
                 if (password == user.password) {
-                    pushUtil.pushSuccess(push = push, msg = "You logged in, email: ${user.email}")
+                    pushUtil.pushSuccess(push = push, msg = user.email)
                 } else {
                     pushUtil.pushException(push = push, msg = "Wrong password")
                 }
