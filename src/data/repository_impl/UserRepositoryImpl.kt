@@ -1,7 +1,6 @@
 package data.repository_impl
 
-import domain.model.repository.SendTextMsgToChatParams
-import domain.model.repository.UserRepository
+import domain.model.repository.*
 import domain.model.user.SimpleUser
 import domain.model.user.User
 import ui.push.PushUtil
@@ -9,6 +8,8 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
+import java.lang.StringBuilder
+import java.util.Date
 import java.util.regex.Pattern
 
 class UserRepositoryImpl(
@@ -88,6 +89,58 @@ class UserRepositoryImpl(
             bufferedWriter.close()
             fileWriter.close()
         }
+    }
+
+    override fun fetchChat(push: PrintWriter, fetchChatParams: FetchChatParams) {
+        val chatFile = findChat(directory = init(CHAT_DIRECTORY_PATH), user1 = fetchChatParams.user1, user2 = fetchChatParams.user2)
+        val content = chatFile.readText()
+        val list = content.split(";")
+        val messages = mutableListOf<ChatField>()
+
+        list.forEach {
+            var sender: String? = null
+            var date: String? = null
+            var msg: String? = null
+
+            val lines = it.split("\n")
+
+            for (line in lines) {
+                val pair = line.split("=")
+                if (pair.size >= 2) {
+                    val key = pair[0] + "="
+                    val value = pair[1]
+                    when (key) {
+                        Field.SENDER -> {
+                            sender = value
+                        }
+                        Field.DATE -> {
+                            date = value
+                        }
+                        Field.MSG -> {
+                            msg = value
+                        }
+                    }
+                }
+            }
+
+            if (sender != null && date != null && msg != null) {
+                messages.add(
+                    ChatField(
+                        sender = SimpleUser(sender),
+                        date = date,
+                        msg = msg
+                    )
+                )
+            }
+        }
+
+        val result = StringBuilder()
+        messages.forEach {
+            result.append("Sender: ${it.sender}")
+            result.append("Date: ${it.date}")
+            result.append("Message: ${it.msg}")
+        }
+        pushUtil.pushSuccess(push = push, msg = result.toString())
     }
 
     private fun findChat(directory: File, user1: SimpleUser, user2: SimpleUser): File {

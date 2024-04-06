@@ -1,5 +1,6 @@
 package ui.routing
 
+import domain.model.repository.FetchChatParams
 import domain.model.repository.SendTextMsgToChatParams
 import domain.model.repository.UserRepository
 import domain.model.user.SimpleUser
@@ -67,6 +68,19 @@ class ServerRouting(
                                 }
                             }
 
+                            Url.FETCH_CHAT -> {
+                                val fetchChatParams = parseFetchChatParams(line)
+
+                                fetchChatParams?.let {
+                                    userRepository.fetchChat(
+                                        push = push, fetchChatParams = FetchChatParams(
+                                            user1 = it.first,
+                                            user2 = it.second
+                                        )
+                                    )
+                                }
+                            }
+
                             else -> {
                                 pushUtil.pushException(push, "Cannot read this kind of url")
                             }
@@ -109,6 +123,44 @@ class ServerRouting(
             }
         }
         return Pair(email, password)
+    }
+
+    private fun parseFetchChatParams(line: String): Pair<SimpleUser, SimpleUser>? {
+        val params = line.substringAfter("?").split("&")
+        var user1: String? = null
+        var user2: String? = null
+
+        for (param in params) {
+            val split = param.split("=")
+
+            when (split[0]) {
+
+                Params.USER1 -> {
+                    user1 = split[1]
+                }
+
+                Params.USER2 -> {
+                    user2 = split[1]
+                }
+
+                else -> {
+                    pushUtil.pushException(push = push, "Cannot read this kind of value, please try agian")
+                    continue
+                }
+            }
+        }
+
+        if (user1 == null) {
+            pushUtil.pushException(push, "Please, send user1")
+            return null
+        }
+
+        if (user2 == null) {
+            pushUtil.pushException(push, "Please, send user2")
+            return null
+        }
+
+        return Pair(first = SimpleUser(user1), second = SimpleUser(user2))
     }
 
     private fun parseSendTextMsgToChatParams(line: String): SendTextMsgToChatParams? {
@@ -182,6 +234,7 @@ class ServerRouting(
             const val REGISTRATION = "registration"
             const val LOGIN = "login"
             const val SEND_MESSAGE = "send_message"
+            const val FETCH_CHAT = "fetch_chat"
         }
         object Params {
             const val EMAIL = "email"
@@ -190,6 +243,8 @@ class ServerRouting(
             const val RECEIVER = "receiver"
             const val NEW_MSG = "newMsg"
             const val DATE = "date"
+            const val USER1 = "user1"
+            const val USER2 = "user2"
         }
     }
 
