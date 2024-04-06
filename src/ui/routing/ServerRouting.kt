@@ -38,36 +38,22 @@ class ServerRouting(
                         when (input) {
 
                             Url.REGISTRATION -> {
-                                val params = line.substringAfter("?").split("&")
-                                var email = ""
-                                var password = ""
-                                println("params: $params")
-                                for (param in params) {
-                                    val split = param.split("=")
-                                    println("split: $split")
-                                    when (split[0]) {
+                                val (email, password) = parseRegistrationLoginParams(line)
 
-                                        Params.EMAIL -> {
-                                            email = split[1]
-                                        }
-
-                                        Params.PASSWORD -> {
-                                            password = split[1]
-                                        }
-
-                                        else -> {
-                                            pushUtil.pushException(push = push, "Cannot read this kind of value, please try agian")
-                                            continue
-                                        }
-                                    }
-
-                                    userRepository.registration(push = push, user = User(
-                                        email = email, password = password
-                                    ))
-
-                                }
+                                userRepository.registration(push = push, user = User(
+                                    email = email, password = password
+                                ))
+                                
                             }
 
+                            Url.LOGIN -> {
+                                val (email, password) = parseRegistrationLoginParams(line)
+
+                                userRepository.login(push = push, user = User(
+                                    email = email, password = password
+                                ))
+                            }
+                            
                             else -> {
                                 pushUtil.pushException(push, "Cannot read this kind of url")
                             }
@@ -85,6 +71,33 @@ class ServerRouting(
         }
     }
 
+    private fun parseRegistrationLoginParams(line: String): Pair<String, String> {
+        val params = line.substringAfter("?").split("&")
+        var email = ""
+        var password = ""
+
+        for (param in params) {
+            val split = param.split("=")
+            println("split: $split")
+            when (split[0]) {
+
+                Params.EMAIL -> {
+                    email = split[1]
+                }
+
+                Params.PASSWORD -> {
+                    password = split[1]
+                }
+
+                else -> {
+                    pushUtil.pushException(push = push, "Cannot read this kind of value, please try agian")
+                    continue
+                }
+            }
+        }
+        return Pair(email, password)
+    }
+
     fun stop() {
         reader.close()
         push.close()
@@ -95,6 +108,7 @@ class ServerRouting(
     companion object {
         object Url {
             const val REGISTRATION = "registration"
+            const val LOGIN = "login"
         }
         object Params {
             const val EMAIL = "email"

@@ -1,1 +1,1 @@
-password:some
+password=some;
