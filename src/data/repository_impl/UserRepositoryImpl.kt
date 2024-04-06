@@ -20,13 +20,14 @@ class UserRepositoryImpl(
 
     override fun registration(push: PrintWriter, user: User) {
         val directory = init()
-        if (userExists(directory = File(directory, user.email))) {
+        val fileName = "${user.email}.txt"
+        if (userExists(directory = File(directory, fileName))) {
             pushUtil.pushException(push = push, "The same user exists, if it's you, please login")
         } else {
-            val userFile = File(directory, "${user.email}.txt")
+            val userFile = File(directory, fileName)
             userFile.writeText("${Field.PASSWORD}${user.password}")
             pushUtil.pushSuccess(push = push, user.email)
-            println("Success registration")
+            println("Success registration: ${user.email}")
         }
     }
 
