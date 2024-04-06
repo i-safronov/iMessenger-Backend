@@ -3,6 +3,6 @@ package domain.model.repository
 import domain.model.user.User
 import java.io.PrintWriter
 
-interface UserRepository {
-    fun registration(user: User): User
+interface UserRepository: BaseRepository {
+    fun registration(push: PrintWriter, user: User)
 }

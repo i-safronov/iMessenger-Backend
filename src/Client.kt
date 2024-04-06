@@ -11,4 +11,18 @@ fun main() {
     val clientSocket = Socket("127.0.0.1", 8888)
     val out = PrintWriter(clientSocket.getOutputStream(), true)
     val request = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
+
+    while (true) {
+        val console = readlnOrNull()
+
+        if (console != null) {
+            out.println(console)
+
+            println("Response: ${request.readLine()}")
+            println()
+        } else {
+            println("Please, enter something")
+        }
+    }
+
 }

@@ -1,22 +1,25 @@
-import domain.model.repository.UserRepository
-import domain.model.user.User
+import data.repository_impl.UserRepositoryImpl
 import ui.push.PushUtil
 import ui.routing.ServerRouting
 import java.net.ServerSocket
 
 fun main() {
     val socket = ServerSocket(8888)
+    val pushUtil = PushUtil()
 
     val serverRouting = ServerRouting(
-        userRepository = object: UserRepository {
-            override fun registration(user: User): User {
-                return User("", "")
-            }
-        },
-        pushUtil = PushUtil(),
+        userRepository = UserRepositoryImpl(pushUtil),
+        pushUtil = pushUtil,
         serverSocket = socket,
     )
 
     serverRouting.start()
-
 }
+
+/** Documentation:
+ * / - http://127.0.0.1:8888
+ *
+ * Registration:
+ * /registration?email=some@gmail.com&password=*****
+ *
+ * */

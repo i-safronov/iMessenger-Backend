@@ -25,7 +25,7 @@ class ServerRouting(
                 clientSocket = serverSocket.accept()
                 push = PrintWriter(clientSocket.getOutputStream(), true)
                 reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
-                println("New client connected: $clientSocket, ${reader.readLine()}")
+                println("New client connected: $clientSocket")
 
                 val line = reader.readLine()
 
@@ -38,12 +38,13 @@ class ServerRouting(
                         when (input) {
 
                             Url.REGISTRATION -> {
-                                val params = input.substringAfter("?").split("&")
+                                val params = line.substringAfter("?").split("&")
                                 var email = ""
                                 var password = ""
-
+                                println("params: $params")
                                 for (param in params) {
                                     val split = param.split("=")
+                                    println("split: $split")
                                     when (split[0]) {
 
                                         Params.EMAIL -> {
@@ -60,7 +61,7 @@ class ServerRouting(
                                         }
                                     }
 
-                                    userRepository.registration(user = User(
+                                    userRepository.registration(push = push, user = User(
                                         email = email, password = password
                                     ))
 
@@ -72,10 +73,14 @@ class ServerRouting(
                             }
 
                         }
+                    } else {
+                        println("404")
+                        pushUtil.pushException(push, "Illegal request")
                     }
                 }
             }
         } catch (e: Exception) {
+            println("Exception: ${e.message}")
             e.printStackTrace()
         }
     }
