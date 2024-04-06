@@ -1,6 +1,8 @@
 package ui.routing
 
+import domain.model.repository.SendTextMsgToChatParams
 import domain.model.repository.UserRepository
+import domain.model.user.SimpleUser
 import domain.model.user.User
 import ui.push.PushUtil
 import java.io.BufferedReader
@@ -8,6 +10,7 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.Date
 
 class ServerRouting(
     private val userRepository: UserRepository,
@@ -53,7 +56,17 @@ class ServerRouting(
                                     email = email, password = password
                                 ))
                             }
-                            
+
+                            Url.SEND_MESSAGE -> {
+                                val sendTextMsgToChatParams = parseSendTextMsgToChatParams(line)
+
+                                sendTextMsgToChatParams?.let {
+                                    userRepository.sendMsgToChat(
+                                        push = push, sendTextMsgToChatParams = it
+                                    )
+                                }
+                            }
+
                             else -> {
                                 pushUtil.pushException(push, "Cannot read this kind of url")
                             }
@@ -98,6 +111,65 @@ class ServerRouting(
         return Pair(email, password)
     }
 
+    private fun parseSendTextMsgToChatParams(line: String): SendTextMsgToChatParams? {
+        val params = line.substringAfter("?").split("&")
+        var sender: SimpleUser? = null
+        var receiver: SimpleUser? = null
+        var newMsg: String? = null
+        var date: String? = null
+
+        for (param in params) {
+            val split = param.split("=")
+            when (split[0]) {
+
+                Params.SENDER -> {
+                    sender = SimpleUser(email = split[1])
+                }
+
+                Params.RECEIVER -> {
+                    receiver = SimpleUser(email = split[1])
+                }
+
+                Params.NEW_MSG -> {
+                    newMsg = split[1]
+                }
+
+                Params.DATE -> {
+                    date = split[1]
+                }
+
+                else -> {
+                    pushUtil.pushException(push = push, msg = "Cannot read this kind of value, please try agian")
+                    continue
+                }
+            }
+
+        }
+
+        if (sender == null) {
+            pushUtil.pushException(push = push, msg = "Please, send a sender of message")
+        }
+
+        if (receiver == null) {
+            pushUtil.pushException(push = push, msg = "Please, send a receiver of message")
+        }
+
+        if (newMsg == null) {
+            pushUtil.pushException(push = push, msg = "Please, send a message")
+        }
+
+        if (date == null) {
+            date = Date().toString()
+        }
+
+        return SendTextMsgToChatParams(
+            sender = sender!!,
+            receiver = receiver!!,
+            newMsg = newMsg!!,
+            date = date
+        )
+    }
+
     fun stop() {
         reader.close()
         push.close()
@@ -109,10 +181,15 @@ class ServerRouting(
         object Url {
             const val REGISTRATION = "registration"
             const val LOGIN = "login"
+            const val SEND_MESSAGE = "send_message"
         }
         object Params {
             const val EMAIL = "email"
             const val PASSWORD = "password"
+            const val SENDER = "sender"
+            const val RECEIVER = "receiver"
+            const val NEW_MSG = "newMsg"
+            const val DATE = "date"
         }
     }
 
